@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@0,300;0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#F3EEE6;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;padding:0;}
+input,select{font-family:inherit;font-size:14px;}
+input:focus,select:focus{outline:2px solid rgba(63,0,142,0.35);outline-offset:1px;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#D8CFC0;border-radius:0;}
+@keyframes pgFade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+@keyframes pgScale{from{opacity:0;transform:scale(0.97);}to{opacity:1;transform:none;}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#F3EEE6;font-family:'Inter',system-ui,sans-serif;color:#1A1714;-webkit-font-smoothing:antialiased;">
+
+  <nav style="position:sticky;top:0;z-index:40;background:rgba(243,238,230,0.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid #E1D9CC;">
+    <div style="max-width:1120px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:74px;gap:24px;">
+      <div style="display:flex;align-items:center;gap:13px;min-width:0;">
+        <img src="assets/giraffe-mark.png" alt="" style="width:36px;height:36px;object-fit:contain;mix-blend-mode:multiply;"/>
+        <div style="display:flex;flex-direction:column;gap:3px;line-height:1;min-width:0;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color: {{ accent }};">Shared House · Adelaide</span>
+          <span style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:#1A1714;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ houseName }}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:18px;height:100%;padding-top:24px;overflow-x:auto;">
+        <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="6">
+          <button onClick="{{ tab.onSelect }}" style="padding:0 2px 24px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap;color: {{ tab.color }};font-weight: {{ tab.weight }};border-bottom:2px solid {{ tab.border }};">{{ tab.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </nav>
+
+  <main style="max-width:1120px;margin:0 auto;padding:52px 32px 120px;">
+
+    <!-- ============ DASHBOARD ============ -->
+    <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+      <div style="">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color: {{ accent }};">01 · The house, this week</div>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:46px;line-height:1.04;color:#1A1714;margin:12px 0 6px;">Where everyone stands.</h1>
+        <p style="font-size:15px;color:#6B635A;margin:0;">As of {{ todayStr }}. Rent, bills and shared buys, netted into who owes whom.</p>
+
+        <div style="margin-top:36px;background:#1A1714;color:#F3EEE6;padding:40px 44px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:28px;">
+          <div style="min-width:240px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.16em;text-transform:uppercase;color:#D2BBFF;">{{ heroLabel }}</div>
+            <div style="font-family:'Playfair Display',Georgia,serif;font-size:84px;line-height:0.95;margin-top:14px;color:#FFFEFE;">{{ heroAmt }}</div>
+          </div>
+          <div style="font-size:13.5px;line-height:1.7;color:#C9C2BA;max-width:300px;">Yash &amp; Sayli front the lease and most bills. Everyone settles back to them — split below by household.</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#E1D9CC;margin-top:1px;border:1px solid #E1D9CC;">
+          <sc-for list="{{ dashHouseholds }}" as="hh" hint-placeholder-count="3">
+            <div style="background:#fff;padding:28px 26px;display:flex;flex-direction:column;gap:20px;min-height:200px;">
+              <div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color: {{ hh.color }};">{{ hh.statusLabel }}</div>
+                <div style="font-family:'Playfair Display',Georgia,serif;font-size:27px;color:#1A1714;margin-top:7px;line-height:1.05;">{{ hh.name }}</div>
+              </div>
+              <div style="font-family:'Playfair Display',Georgia,serif;font-size:46px;line-height:1;color: {{ hh.color }};">{{ hh.netStr }}</div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;">
+                <sc-for list="{{ hh.members }}" as="m" hint-placeholder-count="2">
+                  <button onClick="{{ m.onView }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6B635A;border:1px solid #E1D9CC;padding:6px 11px;background:#FAF7F1;" style-hover="border-color:#1A1714;color:#1A1714;">{{ m.name }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;margin-top:24px;">
+          <div style="background:#fff;border:1px solid #E7E0D4;padding:30px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color: {{ accent }};">Settle up</div>
+            <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;margin:8px 0 20px;">The shortest way to square up.</div>
+            <sc-if value="{{ settleEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:14px;color:#6B635A;padding:8px 0;">Everyone is square. Nothing to settle right now.</div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ settleList }}" as="t" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;border-top:1px solid #EFE9DF;">
+                  <div style="display:flex;align-items:center;gap:12px;font-size:15px;">
+                    <span style="font-weight:600;color:#1A1714;">{{ t.fromName }}</span>
+                    <img src="assets/icons/arrow-right.svg" alt="to" style="width:17px;height:17px;opacity:0.4;"/>
+                    <span style="font-weight:600;color:#1A1714;">{{ t.toName }}</span>
+                  </div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:500;color: {{ accent }};">{{ t.amountStr }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #E7E0D4;padding:30px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color: {{ accent }};">Rent · {{ rentWeek.weekLabel }}</div>
+            <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;margin:8px 0 20px;">Due this week.</div>
+            <button onClick="{{ rentWeek.harleen.onToggle }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-top:1px solid #EFE9DF;text-align:left;">
+              <span style="display:flex;align-items:center;gap:11px;">
+                <span style="width:18px;height:18px;border:1.5px solid {{ rentWeek.harleen.boxBorder }};background: {{ rentWeek.harleen.boxBg }};display:flex;align-items:center;justify-content:center;">
+                  <img src="assets/icons/check.svg" alt="" style="width:12px;height:12px;filter:brightness(0) invert(1);opacity: {{ rentWeek.harleen.checkOp }};"/>
+                </span>
+                <span style="font-size:14.5px;color:#1A1714;">{{ rentWeek.harleen.label }}</span>
+              </span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color: {{ rentWeek.harleen.amtColor }};">{{ rentWeek.harleen.amountStr }}</span>
+            </button>
+            <button onClick="{{ rentWeek.h2.onToggle }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-top:1px solid #EFE9DF;text-align:left;">
+              <span style="display:flex;align-items:center;gap:11px;">
+                <span style="width:18px;height:18px;border:1.5px solid {{ rentWeek.h2.boxBorder }};background: {{ rentWeek.h2.boxBg }};display:flex;align-items:center;justify-content:center;">
+                  <img src="assets/icons/check.svg" alt="" style="width:12px;height:12px;filter:brightness(0) invert(1);opacity: {{ rentWeek.h2.checkOp }};"/>
+                </span>
+                <span style="font-size:14.5px;color:#1A1714;">{{ rentWeek.h2.label }}</span>
+              </span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color: {{ rentWeek.h2.amtColor }};">{{ rentWeek.h2.amountStr }}</span>
+            </button>
+            <div style="font-size:12px;color:#9C9388;margin-top:16px;line-height:1.5;">Tap a row to mark it paid. Rent goes to Yash &amp; Sayli.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;background:#fff;border:1px solid #E7E0D4;padding:30px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color: {{ accent }};">Recent activity</div>
+          <div style="margin-top:14px;">
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 0;border-top:1px solid #EFE9DF;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#9C9388;width:54px;">{{ a.dateStr }}</span>
+                  <div>
+                    <div style="font-size:14.5px;color:#1A1714;">{{ a.title }}</div>
+                    <div style="font-size:12px;color:#9C9388;">{{ a.sub }}</div>
+                  </div>
+                </div>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#1A1714;">{{ a.amountStr }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ RENT ============ -->
+    <sc-if value="{{ isRent }}" hint-placeholder-val="{{ false }}">
+      <div style="">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:20px;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color: {{ accent }};">02 · Weekly rent</div>
+            <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:44px;line-height:1.04;margin:12px 0 8px;">Rent to Yash &amp; Sayli.</h1>
+            <p style="font-size:15px;color:#6B635A;margin:0;max-width:560px;">Harleen pays <b style="color:#1A1714;">$250/wk</b>. Suban &amp; Midhu pay <b style="color:#1A1714;">$300/wk</b> as a couple. Both go to the primary tenants.</p>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#9C9388;">Rent outstanding</div>
+            <div style="font-family:'Playfair Display',Georgia,serif;font-size:40px;color: {{ accent }};line-height:1;margin-top:6px;">{{ rentOutStr }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top:34px;border:1px solid #E7E0D4;background:#fff;">
+          <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;gap:0;background:#FAF7F1;border-bottom:1px solid #E7E0D4;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#9C9388;">
+            <div style="padding:16px 24px;">Week</div>
+            <div style="padding:16px 16px;">Harleen · $250</div>
+            <div style="padding:16px 16px;">Suban &amp; Midhu · $300</div>
+            <div style="padding:16px 24px;text-align:right;">Week total</div>
+          </div>
+          <sc-for list="{{ rentRows }}" as="r" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;gap:0;border-bottom:1px solid #EFE9DF;align-items:center;">
+              <div style="padding:18px 24px;font-size:14.5px;color:#1A1714;">{{ r.weekLabel }}</div>
+              <div style="padding:14px 16px;">
+                <button onClick="{{ r.onToggleH }}" style="display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid {{ r.hChip.border }};background: {{ r.hChip.bg }};font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;color: {{ r.hChip.color }};">{{ r.hChip.label }} · {{ r.harleenStr }}</button>
+              </div>
+              <div style="padding:14px 16px;">
+                <button onClick="{{ r.onToggleH2 }}" style="display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid {{ r.h2Chip.border }};background: {{ r.h2Chip.bg }};font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;color: {{ r.h2Chip.color }};">{{ r.h2Chip.label }} · {{ r.h2Str }}</button>
+              </div>
+              <div style="padding:18px 24px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:14px;color:#1A1714;">{{ r.totalStr }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <p style="font-size:12.5px;color:#9C9388;margin-top:16px;">Tap any chip to flip it between <b style="color:#3E6B4E;">paid</b> and <b style="color:#9A3B2E;">due</b>. Older weeks are kept for the record.</p>
+      </div>
+    </sc-if>
+
+    <!-- ============ BILLS ============ -->
+    <sc-if value="{{ isBills }}" hint-placeholder-val="{{ false }}">
+      <div style="">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:20px;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color: {{ accent }};">03 · Quarterly bills</div>
+            <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:44px;line-height:1.04;margin:12px 0 8px;">Utilities, split by who was home.</h1>
+            <p style="font-size:15px;color:#6B635A;margin:0;max-width:580px;">Each bill is divided across all five of us, weighted by the weeks each person actually lived here in the billing window.</p>
+          </div>
+          <button onClick="{{ onAddBill }}" style="display:inline-flex;align-items:center;gap:9px;background:#1A1714;color:#F3EEE6;padding:13px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;" style-hover="background:#3F008E;">
+            <img src="assets/icons/plus-circle.svg" alt="" style="width:16px;height:16px;filter:brightness(0) invert(1);"/> Add bill
+          </button>
+        </div>
+
+        <div style="margin-top:34px;display:flex;flex-direction:column;gap:24px;">
+          <sc-for list="{{ billCards }}" as="b" hint-placeholder-count="4">
+            <div style="border:1px solid #E7E0D4;background:#fff;padding:30px;">
+              <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid #EFE9DF;padding-bottom:22px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-family:'Playfair Display',Georgia,serif;font-size:30px;color:#1A1714;">{{ b.type }}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.1em;color: {{ accent }};border:1px solid #E1D2F0;background:#F6F0FC;padding:4px 9px;">{{ b.methodLabel }}</span>
+                  </div>
+                  <div style="font-size:13px;color:#9C9388;margin-top:8px;">{{ b.paidBy }} · billed {{ b.dateStr }} · period {{ b.periodStr }}</div>
+                </div>
+                <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
+                  <span style="font-family:'Playfair Display',Georgia,serif;font-size:34px;color:#1A1714;line-height:1;">{{ b.amountStr }}</span>
+                  <button onClick="{{ b.onSettle }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3E6B4E;border:1px solid #CFE0D4;background:#EAF1EC;padding:7px 12px;" style-hover="background:#3E6B4E;color:#fff;border-color:#3E6B4E;">Mark settled</button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#EFE9DF;margin-top:22px;border:1px solid #EFE9DF;">
+                <sc-for list="{{ b.rows }}" as="row" hint-placeholder-count="5">
+                  <div style="background:#FCFAF6;padding:16px 14px;">
+                    <div style="font-size:13.5px;color:#1A1714;font-weight:500;">{{ row.name }}</div>
+                    <div style="font-size:11px;color:#9C9388;margin-top:3px;">{{ row.detail }}</div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:15px;color: {{ accent }};margin-top:10px;">{{ row.shareStr }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ SHARED ============ -->
+    <sc-if value="{{ isShared }}" hint-placeholder-val="{{ false }}">
+      <div style="">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:20px;">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color: {{ accent }};">04 · Shared purchases</div>
+            <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:44px;line-height:1.04;margin:12px 0 8px;">Things we all chip in for.</h1>
+            <p style="font-size:15px;color:#6B635A;margin:0;max-width:560px;">One-off household buys — the rat trap, cleaning supplies — always split five equal ways, whoever paid.</p>
+          </div>
+          <button onClick="{{ onAddShared }}" style="display:inline-flex;align-items:center;gap:9px;background:#1A1714;color:#F3EEE6;padding:13px 20px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;" style-hover="background:#3F008E;">
+            <img src="assets/icons/plus-circle.svg" alt="" style="width:16px;height:16px;filter:brightness(0) invert(1);"/> Add expense
+          </button>
+        </div>
+
+        <div style="margin-top:34px;display:grid;grid-template-columns:repeat(2,1fr);gap:24px;">
+          <sc-for list="{{ sharedCards }}" as="c" hint-placeholder-count="3">
+            <div style="border:1px solid #E7E0D4;background:#fff;padding:28px;display:flex;flex-direction:column;gap:18px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;">
+                <div>
+                  <div style="font-family:'Playfair Display',Georgia,serif;font-size:26px;color:#1A1714;line-height:1.1;">{{ c.label }}</div>
+                  <div style="font-size:12.5px;color:#9C9388;margin-top:6px;">{{ c.paidBy }} · {{ c.dateStr }}</div>
+                </div>
+                <span style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#1A1714;">{{ c.amountStr }}</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #EFE9DF;padding-top:16px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;color: {{ accent }};">{{ c.eachStr }} each · ×5</span>
+                <button onClick="{{ c.onSettle }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#3E6B4E;border:1px solid #CFE0D4;background:#EAF1EC;padding:7px 12px;" style-hover="background:#3E6B4E;color:#fff;border-color:#3E6B4E;">Mark settled</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ PEOPLE ============ -->
+    <sc-if value="{{ isPeople }}" hint-placeholder-val="{{ false }}">
+      <div style="">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color: {{ accent }};">05 · Housemates</div>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:44px;line-height:1.04;margin:12px 0 8px;">Who lives here, and when.</h1>
+        <p style="font-size:15px;color:#6B635A;margin:0 0 34px;max-width:600px;">Move-in dates and time away drive how the bills get weighted. Edit anyone to recompute the splits.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:#E1D9CC;border:1px solid #E1D9CC;">
+          <sc-for list="{{ peopleCards }}" as="p" hint-placeholder-count="5">
+            <div style="background:#fff;padding:28px;display:flex;flex-direction:column;gap:20px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <div style="width:46px;height:46px;border-radius:50%;background:#F0E8FA;border:1px solid #E1D2F0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;font-size:18px;color: {{ accent }};">{{ p.initial }}</div>
+                  <div>
+                    <div style="font-family:'Playfair Display',Georgia,serif;font-size:23px;color:#1A1714;line-height:1;">{{ p.name }}</div>
+                    <div style="font-size:11.5px;color:#9C9388;margin-top:4px;font-family:'JetBrains Mono',monospace;letter-spacing:0.06em;">{{ p.household }}</div>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:17px;color: {{ p.netColor }};">{{ p.netStr }}</div>
+                  <div style="font-size:10px;color:#9C9388;text-transform:uppercase;letter-spacing:0.08em;font-family:'JetBrains Mono',monospace;margin-top:2px;">{{ p.netLabel }}</div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;border-top:1px solid #EFE9DF;padding-top:18px;">
+                <div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;font-family:'JetBrains Mono',monospace;">Moved in</div><div style="font-size:13.5px;color:#1A1714;margin-top:4px;">{{ p.movedInStr }}</div></div>
+                <div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;font-family:'JetBrains Mono',monospace;">Away</div><div style="font-size:13.5px;color:#1A1714;margin-top:4px;">{{ p.awayStr }}</div></div>
+                <div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;font-family:'JetBrains Mono',monospace;">Home this period</div><div style="font-size:13.5px;color:#1A1714;margin-top:4px;">{{ p.weeksStr }}</div></div>
+                <div><div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;font-family:'JetBrains Mono',monospace;">Rent</div><div style="font-size:13.5px;color:#1A1714;margin-top:4px;">{{ p.rentStr }}</div></div>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:auto;">
+                <button onClick="{{ p.onView }}" style="flex:1;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #1A1714;color:#1A1714;padding:11px;background:#fff;" style-hover="background:#1A1714;color:#fff;">View detail</button>
+                <button onClick="{{ p.onEdit }}" style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid #E1D9CC;color:#6B635A;padding:11px 16px;background:#FAF7F1;" style-hover="border-color:#1A1714;color:#1A1714;">Edit dates</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ HISTORY ============ -->
+    <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+      <div style="">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.16em;text-transform:uppercase;color: {{ accent }};">06 · History</div>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-weight:400;font-size:44px;line-height:1.04;margin:12px 0 8px;">Settled &amp; paid.</h1>
+        <p style="font-size:15px;color:#6B635A;margin:0 0 34px;">Everything marked done. Tap undo to bring an item back into the open balances.</p>
+
+        <sc-if value="{{ historyEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="border:1px solid #E7E0D4;background:#fff;padding:48px;text-align:center;color:#9C9388;font-size:14px;">Nothing settled yet. Paid rent and settled bills will collect here.</div>
+        </sc-if>
+
+        <div style="border:1px solid #E7E0D4;background:#fff;">
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 26px;border-bottom:1px solid #EFE9DF;">
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="width:30px;height:30px;border-radius:50%;background:#EAF1EC;display:flex;align-items:center;justify-content:center;"><img src="assets/icons/check.svg" alt="" style="width:14px;height:14px;filter:invert(34%) sepia(18%) saturate(900%) hue-rotate(96deg);"/></span>
+                <div>
+                  <div style="font-size:14.5px;color:#1A1714;">{{ h.title }}</div>
+                  <div style="font-size:12px;color:#9C9388;">{{ h.sub }} · {{ h.dateStr }}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:18px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;border:1px solid #E1D9CC;padding:4px 8px;">{{ h.kind }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#1A1714;width:78px;text-align:right;">{{ h.amountStr }}</span>
+                <button onClick="{{ h.onUndo }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9A3B2E;">Undo</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ============ PERSON DETAIL ============ -->
+    <sc-if value="{{ isPerson }}" hint-placeholder-val="{{ false }}">
+      <div style="">
+        <button onClick="{{ person.onBack }}" style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#6B635A;margin-bottom:26px;" style-hover="color:#1A1714;">← All housemates</button>
+
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid #E1D9CC;padding-bottom:30px;">
+          <div style="display:flex;align-items:center;gap:20px;">
+            <div style="width:64px;height:64px;border-radius:50%;background:#F0E8FA;border:1px solid #E1D2F0;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;font-size:26px;color: {{ accent }};">{{ person.initial }}</div>
+            <div>
+              <div style="font-family:'Playfair Display',Georgia,serif;font-size:40px;color:#1A1714;line-height:1;">{{ person.name }}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#9C9388;margin-top:7px;">{{ person.household }}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:'Playfair Display',Georgia,serif;font-size:48px;color: {{ person.netColor }};line-height:1;">{{ person.netStr }}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;margin-top:6px;">{{ person.netLabel }}</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;">
+          <div style="border:1px solid #E7E0D4;background:#fff;padding:28px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color: {{ accent }};">What they owe</div>
+            <div style="display:flex;justify-content:space-between;padding:18px 0 16px;border-bottom:1px solid #EFE9DF;margin-top:8px;">
+              <div><div style="font-size:14.5px;color:#1A1714;">Rent</div><div style="font-size:12px;color:#9C9388;">{{ person.rentWeeklyStr }}</div></div>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:#1A1714;">{{ person.rentOutStr }}</span>
+            </div>
+            <sc-for list="{{ person.lines }}" as="ln" hint-placeholder-count="3">
+              <div style="display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #EFE9DF;">
+                <div><div style="font-size:14.5px;color:#1A1714;">{{ ln.label }}</div><div style="font-size:12px;color:#9C9388;">{{ ln.sub }}</div></div>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:#1A1714;">{{ ln.amountStr }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex;justify-content:space-between;padding-top:18px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Total share</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color: {{ accent }};">{{ person.owesStr }}</span>
+            </div>
+          </div>
+
+          <div style="border:1px solid #E7E0D4;background:#fff;padding:28px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color: {{ accent }};">What they fronted</div>
+            <sc-if value="{{ person.frontedEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:14px;color:#9C9388;padding:18px 0;">Hasn’t paid for anything on the open ledger.</div>
+            </sc-if>
+            <sc-for list="{{ person.fronted }}" as="f" hint-placeholder-count="2">
+              <div style="display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid #EFE9DF;">
+                <span style="font-size:14.5px;color:#1A1714;">{{ f.label }}</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:15px;color:#3E6B4E;">{{ f.amountStr }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex;justify-content:space-between;padding-top:18px;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Paid on behalf</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:16px;color:#3E6B4E;">{{ person.paidStr }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </main>
+
+  <!-- ============ MODAL ============ -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:80;background:rgba(26,23,20,0.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:24px;" onClick="{{ mClose }}">
+      <div onClick="{{ stop }}" style="width:100%;max-width:520px;background:#FFFEFE;border:1px solid #E1D9CC;animation:pgScale 0.3s ease both;max-height:90vh;overflow:auto;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:24px 28px;border-bottom:1px solid #EFE9DF;">
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;color:#1A1714;">{{ modalTitle }}</div>
+          <button onClick="{{ mClose }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #E1D9CC;"><img src="assets/icons/x-close.svg" alt="close" style="width:15px;height:15px;"/></button>
+        </div>
+        <div style="padding:28px;display:flex;flex-direction:column;gap:20px;">
+
+          <sc-if value="{{ isBillModal }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:20px;">
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Bill type</span>
+                <select value="{{ modalDraft.type }}" onChange="{{ mType }}" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;">
+                  <option value="Electricity">Electricity</option><option value="Water">Water</option><option value="Gas">Gas</option><option value="Internet">Internet</option><option value="Other">Other</option>
+                </select></label>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Amount (AUD)</span>
+                <input type="number" value="{{ modalDraft.amount }}" onInput="{{ mAmount }}" placeholder="0.00" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Paid by</span>
+                <select value="{{ modalDraft.paidBy }}" onChange="{{ mPaidBy }}" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;">
+                  <sc-for list="{{ modalPeople }}" as="opt" hint-placeholder-count="5"><option value="{{ opt.id }}">{{ opt.name }}</option></sc-for>
+                </select></label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Period start</span>
+                  <input type="date" value="{{ modalDraft.pStart }}" onInput="{{ mStart }}" style="padding:10px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+                <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Period end</span>
+                  <input type="date" value="{{ modalDraft.pEnd }}" onInput="{{ mEnd }}" style="padding:10px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              </div>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Split method</span>
+                <select value="{{ modalDraft.splitMethod }}" onChange="{{ mMethod }}" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;">
+                  <option value="presence">By weeks home (fair)</option><option value="equal">Equal five ways</option>
+                </select></label>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isCommonModal }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:20px;">
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">What was it?</span>
+                <input type="text" value="{{ modalDraft.label }}" onInput="{{ mLabel }}" placeholder="e.g. Rat trap" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Amount (AUD)</span>
+                <input type="number" value="{{ modalDraft.amount }}" onInput="{{ mAmount }}" placeholder="0.00" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Paid by</span>
+                <select value="{{ modalDraft.paidBy }}" onChange="{{ mPaidBy }}" style="padding:11px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;">
+                  <sc-for list="{{ modalPeople }}" as="opt" hint-placeholder-count="5"><option value="{{ opt.id }}">{{ opt.name }}</option></sc-for>
+                </select></label>
+              <div style="font-size:12.5px;color:#9C9388;background:#F6F0FC;border:1px solid #ECE3F6;padding:12px 14px;">Split equally across all five housemates.</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isPresenceModal }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:20px;">
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Moved in</span>
+                <input type="date" value="{{ modalDraft.movedIn }}" onInput="{{ mMovedIn }}" style="padding:10px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Moved out (optional)</span>
+                <input type="date" value="{{ modalDraft.movedOut }}" onInput="{{ mMovedOut }}" style="padding:10px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Away from</span>
+                  <input type="date" value="{{ modalDraft.awayStart }}" onInput="{{ mAwayStart }}" style="padding:10px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+                <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#9C9388;">Away until</span>
+                  <input type="date" value="{{ modalDraft.awayEnd }}" onInput="{{ mAwayEnd }}" style="padding:10px 12px;border:1px solid #E1D9CC;background:#FAF7F1;color:#1A1714;"/></label>
+              </div>
+              <div style="font-size:12.5px;color:#9C9388;background:#F6F0FC;border:1px solid #ECE3F6;padding:12px 14px;">Time away reduces this person’s share of bills for the periods that overlap.</div>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:4px;">
+            <button onClick="{{ mClose }}" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#6B635A;border:1px solid #E1D9CC;padding:12px 20px;" style-hover="border-color:#1A1714;color:#1A1714;">Cancel</button>
+            <button onClick="{{ mSave }}" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#F3EEE6;background:#1A1714;padding:12px 24px;" style-hover="background:#3F008E;">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:920},&quot;houseName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Under One Roof&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#3F008E&quot;,&quot;options&quot;:[&quot;#3F008E&quot;,&quot;#5B2A9E&quot;,&quot;#7A4FB5&quot;,&quot;#B378BF&quot;]}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.STORAGE_KEY = 'house_ledger_v1';
+    this.state = this.load();
+  }
+
+  defaults(){
+    const PEOPLE = [
+      {id:'yash', name:'Yash', hh:'h1', initial:'Y'},
+      {id:'sayli', name:'Sayli', hh:'h1', initial:'S'},
+      {id:'suban', name:'Suban', hh:'h2', initial:'Su'},
+      {id:'midhu', name:'Midhu', hh:'h2', initial:'M'},
+      {id:'harleen', name:'Harleen', hh:'h3', initial:'H'},
+    ];
+    const residence = {
+      yash:    {movedIn:'2025-09-01', movedOut:null, away:[{start:'2026-04-16', end:'2026-06-01'}]},
+      sayli:   {movedIn:'2025-09-01', movedOut:null, away:[{start:'2026-04-16', end:'2026-06-01'}]},
+      suban:   {movedIn:'2026-04-16', movedOut:null, away:[]},
+      midhu:   {movedIn:'2026-04-16', movedOut:null, away:[]},
+      harleen: {movedIn:'2025-09-01', movedOut:null, away:[]},
+    };
+    const period = {start:'2026-03-16', end:'2026-06-15'};
+    const bills = [
+      {id:'b1', type:'Electricity', amount:420.50, paidBy:'yash',  date:'2026-06-15', period:{start:'2026-03-16',end:'2026-06-15'}, splitMethod:'presence', settled:false},
+      {id:'b2', type:'Water',       amount:186.00, paidBy:'sayli', date:'2026-06-15', period:{start:'2026-03-16',end:'2026-06-15'}, splitMethod:'presence', settled:false},
+      {id:'b3', type:'Gas',         amount:240.75, paidBy:'yash',  date:'2026-06-15', period:{start:'2026-03-16',end:'2026-06-15'}, splitMethod:'presence', settled:false},
+      {id:'b4', type:'Internet',    amount:267.00, paidBy:'suban', date:'2026-06-15', period:{start:'2026-03-16',end:'2026-06-15'}, splitMethod:'equal',    settled:false},
+      {id:'b0', type:'Electricity', amount:388.00, paidBy:'yash',  date:'2026-03-15', period:{start:'2025-12-16',end:'2026-03-15'}, splitMethod:'presence', settled:true},
+    ];
+    const common = [
+      {id:'c1', label:'Rat trap', amount:24.00, paidBy:'yash', date:'2026-06-10', settled:false},
+      {id:'c2', label:'Dish soap & cleaning', amount:38.50, paidBy:'midhu', date:'2026-06-05', settled:false},
+      {id:'c3', label:'Light bulbs', amount:15.00, paidBy:'harleen', date:'2026-05-28', settled:false},
+    ];
+    const rentWeeks = [
+      {id:'w1', weekStart:'2026-06-15', paid:{harleen:false, h2:false}},
+      {id:'w2', weekStart:'2026-06-08', paid:{harleen:false, h2:false}},
+      {id:'w3', weekStart:'2026-06-01', paid:{harleen:true,  h2:false}},
+      {id:'w4', weekStart:'2026-05-25', paid:{harleen:true,  h2:true}},
+      {id:'w5', weekStart:'2026-05-18', paid:{harleen:true,  h2:true}},
+      {id:'w6', weekStart:'2026-05-11', paid:{harleen:true,  h2:true}},
+    ];
+    return {
+      view:'dashboard', selectedPerson:null, modal:null,
+      people:PEOPLE, residence, period, bills, common, rentWeeks,
+      rentRates:{harleen:250, h2:300},
+    };
+  }
+
+  load(){
+    try{
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if(raw){ return {...this.defaults(), ...JSON.parse(raw), modal:null}; }
+    }catch(e){}
+    return this.defaults();
+  }
+  componentDidUpdate(){
+    try{ const {modal, ...rest} = this.state; localStorage.setItem(this.STORAGE_KEY, JSON.stringify(rest)); }catch(e){}
+  }
+
+  /* ---------- date + presence ---------- */
+  pd(s){ return new Date(s + 'T00:00:00'); }
+  presentDays(pid, ps, pe){
+    const r = this.state.residence[pid];
+    if(!r) return 0;
+    const S = this.pd(ps).getTime(), E = this.pd(pe).getTime();
+    const inS = Math.max(this.pd(r.movedIn).getTime(), S);
+    const inE = r.movedOut ? Math.min(this.pd(r.movedOut).getTime(), E) : E;
+    if(inE <= inS) return 0;
+    let days = Math.round((inE - inS) / 86400000);
+    (r.away || []).forEach(a => {
+      const as = Math.max(this.pd(a.start).getTime(), inS);
+      const ae = Math.min(this.pd(a.end).getTime(), inE);
+      if(ae > as) days -= Math.round((ae - as) / 86400000);
+    });
+    return Math.max(0, days);
+  }
+  periodDays(p){ return Math.max(1, Math.round((this.pd(p.end) - this.pd(p.start)) / 86400000)); }
+
+  /* ---------- shares ---------- */
+  billShares(b){
+    const ids = this.state.people.map(p => p.id);
+    const sh = {};
+    if(b.splitMethod === 'equal'){ ids.forEach(id => sh[id] = b.amount / ids.length); return sh; }
+    const pd = {}; let total = 0;
+    ids.forEach(id => { const d = this.presentDays(id, b.period.start, b.period.end); pd[id] = d; total += d; });
+    if(total <= 0){ ids.forEach(id => sh[id] = b.amount / ids.length); return sh; }
+    ids.forEach(id => sh[id] = b.amount * pd[id] / total);
+    return sh;
+  }
+
+  /* ---------- balances ---------- */
+  computeBalances(){
+    const S = this.state;
+    const paid = {}, owes = {};
+    S.people.forEach(p => { paid[p.id] = 0; owes[p.id] = 0; });
+    S.bills.filter(b => !b.settled).forEach(b => {
+      const sh = this.billShares(b);
+      paid[b.paidBy] += b.amount;
+      Object.keys(sh).forEach(id => owes[id] += sh[id]);
+    });
+    S.common.filter(c => !c.settled).forEach(c => {
+      paid[c.paidBy] += c.amount;
+      S.people.forEach(p => owes[p.id] += c.amount / S.people.length);
+    });
+    S.rentWeeks.forEach(w => {
+      if(!w.paid.harleen){ owes.harleen += S.rentRates.harleen; paid.yash += S.rentRates.harleen/2; paid.sayli += S.rentRates.harleen/2; }
+      if(!w.paid.h2){ owes.suban += S.rentRates.h2/2; owes.midhu += S.rentRates.h2/2; paid.yash += S.rentRates.h2/2; paid.sayli += S.rentRates.h2/2; }
+    });
+    const persons = {};
+    S.people.forEach(p => persons[p.id] = {paid:paid[p.id], owes:owes[p.id], net:paid[p.id]-owes[p.id]});
+    const hhDef = {h1:{name:'Yash & Sayli', members:['yash','sayli']}, h2:{name:'Suban & Midhu', members:['suban','midhu']}, h3:{name:'Harleen', members:['harleen']}};
+    const households = Object.keys(hhDef).map(hid => {
+      const net = hhDef[hid].members.reduce((s,id)=>s+persons[id].net, 0);
+      return {id:hid, name:hhDef[hid].name, members:hhDef[hid].members, net};
+    });
+    return {persons, households};
+  }
+  settleUp(households){
+    const cred = households.filter(h=>h.net>0.01).map(h=>({name:h.name, rem:h.net})).sort((a,b)=>b.rem-a.rem);
+    const deb  = households.filter(h=>h.net<-0.01).map(h=>({name:h.name, rem:-h.net})).sort((a,b)=>b.rem-a.rem);
+    const out = []; let ci=0, di=0;
+    while(ci<cred.length && di<deb.length){
+      const amt = Math.min(cred[ci].rem, deb[di].rem);
+      out.push({from:deb[di].name, to:cred[ci].name, amount:amt});
+      cred[ci].rem -= amt; deb[di].rem -= amt;
+      if(cred[ci].rem < 0.01) ci++;
+      if(deb[di].rem < 0.01) di++;
+    }
+    return out;
+  }
+
+  /* ---------- actions ---------- */
+  go(view){ this.setState({view, selectedPerson:null}); }
+  toggleRent(id, key){ this.setState(s => ({rentWeeks: s.rentWeeks.map(w => w.id===id ? {...w, paid:{...w.paid, [key]:!w.paid[key]}} : w)})); }
+  toggleSettled(kind, id){ const arr = kind==='bill' ? 'bills' : 'common'; this.setState(s => ({[arr]: s[arr].map(x => x.id===id ? {...x, settled:!x.settled} : x)})); }
+  openModal(type, personId){
+    let draft = {};
+    if(type==='bill') draft = {type:'Electricity', amount:'', paidBy:'yash', pStart:this.state.period.start, pEnd:this.state.period.end, splitMethod:'presence'};
+    if(type==='common') draft = {label:'', amount:'', paidBy:'yash'};
+    if(type==='presence'){ const r = this.state.residence[personId] || {away:[]}; const a = (r.away||[])[0] || {}; draft = {movedIn:r.movedIn||'', movedOut:r.movedOut||'', awayStart:a.start||'', awayEnd:a.end||''}; }
+    this.setState({modal:{type, personId, draft}});
+  }
+  closeModal(){ this.setState({modal:null}); }
+  updateDraft(field, val){ this.setState(s => ({modal:{...s.modal, draft:{...s.modal.draft, [field]:val}}})); }
+  saveModal(){
+    const m = this.state.modal; const d = m.draft;
+    if(m.type==='bill'){
+      const nb = {id:'b'+Date.now(), type:d.type, amount:parseFloat(d.amount)||0, paidBy:d.paidBy, date:new Date().toISOString().slice(0,10), period:{start:d.pStart, end:d.pEnd}, splitMethod:d.splitMethod, settled:false};
+      this.setState(s => ({bills:[nb, ...s.bills], modal:null}));
+    } else if(m.type==='common'){
+      const nc = {id:'c'+Date.now(), label:d.label||'Shared expense', amount:parseFloat(d.amount)||0, paidBy:d.paidBy, date:new Date().toISOString().slice(0,10), settled:false};
+      this.setState(s => ({common:[nc, ...s.common], modal:null}));
+    } else if(m.type==='presence'){
+      const away = (d.awayStart && d.awayEnd) ? [{start:d.awayStart, end:d.awayEnd}] : [];
+      this.setState(s => ({residence:{...s.residence, [m.personId]:{movedIn:d.movedIn, movedOut:d.movedOut||null, away}}, modal:null}));
+    }
+  }
+
+  /* ---------- view models ---------- */
+  renderVals(){
+    const S = this.state;
+    const accent = this.props.accent || '#3F008E';
+    const houseName = this.props.houseName || 'Under One Roof';
+    const owe = '#9A3B2E', credit = '#3E6B4E', ter = '#9C9388';
+    const fmt = n => '$' + Math.abs(n).toFixed(2);
+    const nm = id => (S.people.find(p=>p.id===id)||{}).name || id;
+    const sd = s => this.pd(s).toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+    const wl = s => 'Wk of ' + this.pd(s).toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+    const hhName = {h1:'Yash & Sayli', h2:'Suban & Midhu', h3:'Harleen'};
+
+    const bal = this.computeBalances();
+    const settle = this.settleUp(bal.households);
+    const view = S.view;
+
+    const tabDefs = [['dashboard','Dashboard'],['rent','Rent'],['bills','Bills'],['shared','Shared'],['people','People'],['history','History']];
+    const tabs = tabDefs.map(([id,label]) => {
+      const active = view===id || (id==='people' && view==='person');
+      return {label, color: active?'#1A1714':'#9C9388', weight: active?'600':'500', border: active?accent:'transparent', onSelect: () => this.go(id)};
+    });
+
+    const h1 = bal.households.find(h=>h.id==='h1');
+    const heroAmt = fmt(h1.net);
+    const heroLabel = h1.net >= 0 ? 'Currently owed to Yash & Sayli' : 'Yash & Sayli owe the house';
+
+    const chip = on => on
+      ? {label:'PAID', bg:'#EAF1EC', border:'#CFE0D4', color:credit}
+      : {label:'DUE',  bg:'#F7EAE6', border:'#E6CcC4', color:owe};
+
+    const dashHouseholds = bal.households.map(h => {
+      const status = h.net>0.01 ? 'owed' : (h.net<-0.01 ? 'owes' : 'settled');
+      return {
+        name:h.name,
+        netStr:fmt(h.net),
+        color: status==='owed'?credit:(status==='owes'?owe:ter),
+        statusLabel: status==='owed'?'Is owed':(status==='owes'?'Owes the house':'All settled'),
+        members: h.members.map(id => ({name:nm(id), onView:()=>this.setState({view:'person', selectedPerson:id})})),
+      };
+    });
+
+    const settleList = settle.map(t => ({fromName:t.from, toName:t.to, amountStr:fmt(t.amount)}));
+
+    const w0 = S.rentWeeks[0];
+    const box = on => ({boxBg: on?accent:'#fff', boxBorder: on?accent:'#C9C0B2', checkOp: on?'1':'0', amtColor: on?ter:'#1A1714'});
+    const rentWeek = {
+      weekLabel: wl(w0.weekStart),
+      harleen: {label:'Harleen', amountStr:fmt(S.rentRates.harleen), onToggle:()=>this.toggleRent(w0.id,'harleen'), ...box(w0.paid.harleen)},
+      h2: {label:'Suban & Midhu', amountStr:fmt(S.rentRates.h2), onToggle:()=>this.toggleRent(w0.id,'h2'), ...box(w0.paid.h2)},
+    };
+
+    const acts = [];
+    S.bills.forEach(b => acts.push({date:b.date, title:b.type+' bill', sub:'Paid by '+nm(b.paidBy), amountStr:fmt(b.amount)}));
+    S.common.forEach(c => acts.push({date:c.date, title:c.label, sub:'Paid by '+nm(c.paidBy)+' · 5 ways', amountStr:fmt(c.amount)}));
+    acts.sort((a,b)=>this.pd(b.date)-this.pd(a.date));
+    const activity = acts.slice(0,6).map(a => ({title:a.title, sub:a.sub, amountStr:a.amountStr, dateStr:sd(a.date)}));
+
+    // rent table
+    let rentOutstanding = 0;
+    const rentRows = S.rentWeeks.map(w => {
+      if(!w.paid.harleen) rentOutstanding += S.rentRates.harleen;
+      if(!w.paid.h2) rentOutstanding += S.rentRates.h2;
+      return {
+        weekLabel: wl(w.weekStart),
+        harleenStr: fmt(S.rentRates.harleen), h2Str: fmt(S.rentRates.h2),
+        totalStr: fmt(S.rentRates.harleen + S.rentRates.h2),
+        hChip: chip(w.paid.harleen), h2Chip: chip(w.paid.h2),
+        onToggleH:()=>this.toggleRent(w.id,'harleen'), onToggleH2:()=>this.toggleRent(w.id,'h2'),
+      };
+    });
+
+    // bills
+    const billCards = S.bills.filter(b=>!b.settled).map(b => {
+      const sh = this.billShares(b);
+      const pw = (this.periodDays(b.period)/7).toFixed(1);
+      const rows = S.people.map(p => {
+        const wk = (this.presentDays(p.id, b.period.start, b.period.end)/7).toFixed(1);
+        return {name:p.name, shareStr:fmt(sh[p.id]), detail: b.splitMethod==='equal' ? 'equal share' : (wk+' / '+pw+' wks home')};
+      });
+      return {
+        type:b.type, amountStr:fmt(b.amount),
+        paidBy:'Paid by '+nm(b.paidBy), dateStr:sd(b.date),
+        periodStr: sd(b.period.start)+' – '+sd(b.period.end),
+        methodLabel: b.splitMethod==='equal' ? 'Split equally' : 'Split by weeks home',
+        rows, onSettle:()=>this.toggleSettled('bill', b.id),
+      };
+    });
+
+    // shared
+    const sharedCards = S.common.filter(c=>!c.settled).map(c => ({
+      label:c.label, amountStr:fmt(c.amount), eachStr:fmt(c.amount/5),
+      paidBy:'Paid by '+nm(c.paidBy), dateStr:sd(c.date), onSettle:()=>this.toggleSettled('common', c.id),
+    }));
+
+    // people
+    const pdaysAll = this.periodDays(S.period);
+    const peopleCards = S.people.map(p => {
+      const r = S.residence[p.id];
+      const days = this.presentDays(p.id, S.period.start, S.period.end);
+      const a = (r.away||[])[0];
+      const net = bal.persons[p.id].net;
+      const rent = p.id==='harleen' ? S.rentRates.harleen : (p.hh==='h2' ? S.rentRates.h2/2 : 0);
+      return {
+        id:p.id, name:p.name, initial:p.initial, household:hhName[p.hh],
+        movedInStr: this.pd(r.movedIn).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}),
+        awayStr: a ? (sd(a.start)+' – '+sd(a.end)) : 'No time away',
+        weeksStr: (days/7).toFixed(1)+' / '+(pdaysAll/7).toFixed(1)+' wks',
+        rentStr: rent>0 ? fmt(rent)+'/wk' : 'Receives rent',
+        netStr: fmt(net), netColor: net>0.01?credit:(net<-0.01?owe:ter),
+        netLabel: net>0.01?'Is owed':(net<-0.01?'Owes':'Settled'),
+        onView:()=>this.setState({view:'person', selectedPerson:p.id}),
+        onEdit:()=>this.openModal('presence', p.id),
+      };
+    });
+
+    // history
+    const hist = [];
+    S.bills.filter(b=>b.settled).forEach(b => hist.push({date:b.date, title:b.type+' bill', sub:'Paid by '+nm(b.paidBy), amountStr:fmt(b.amount), kind:'Bill', onUndo:()=>this.toggleSettled('bill', b.id)}));
+    S.common.filter(c=>c.settled).forEach(c => hist.push({date:c.date, title:c.label, sub:'Paid by '+nm(c.paidBy), amountStr:fmt(c.amount), kind:'Shared', onUndo:()=>this.toggleSettled('common', c.id)}));
+    S.rentWeeks.forEach(w => {
+      if(w.paid.harleen) hist.push({date:w.weekStart, title:'Rent · Harleen', sub:wl(w.weekStart), amountStr:fmt(S.rentRates.harleen), kind:'Rent', onUndo:()=>this.toggleRent(w.id,'harleen')});
+      if(w.paid.h2) hist.push({date:w.weekStart, title:'Rent · Suban & Midhu', sub:wl(w.weekStart), amountStr:fmt(S.rentRates.h2), kind:'Rent', onUndo:()=>this.toggleRent(w.id,'h2')});
+    });
+    hist.sort((a,b)=>this.pd(b.date)-this.pd(a.date));
+    const history = hist.map(h => ({title:h.title, sub:h.sub, amountStr:h.amountStr, kind:h.kind, dateStr:sd(h.date), onUndo:h.onUndo}));
+
+    // person detail
+    let person = null;
+    if(S.selectedPerson){
+      const p = S.people.find(x=>x.id===S.selectedPerson);
+      const pb = bal.persons[p.id];
+      const lines = [];
+      S.bills.filter(b=>!b.settled).forEach(b => { const sh=this.billShares(b); lines.push({label:b.type+' bill', sub:'your share', amountStr:fmt(sh[p.id])}); });
+      S.common.filter(c=>!c.settled).forEach(c => lines.push({label:c.label, sub:'1/5 share', amountStr:fmt(c.amount/5)}));
+      const fronted = [];
+      S.bills.filter(b=>!b.settled && b.paidBy===p.id).forEach(b => fronted.push({label:b.type+' bill', amountStr:fmt(b.amount)}));
+      S.common.filter(c=>!c.settled && c.paidBy===p.id).forEach(c => fronted.push({label:c.label, amountStr:fmt(c.amount)}));
+      let rentOut = 0;
+      S.rentWeeks.forEach(w => { if(p.id==='harleen' && !w.paid.harleen) rentOut += S.rentRates.harleen; if(p.hh==='h2' && !w.paid.h2) rentOut += S.rentRates.h2/2; });
+      const rentWeekly = p.id==='harleen' ? S.rentRates.harleen : (p.hh==='h2' ? S.rentRates.h2/2 : 0);
+      person = {
+        name:p.name, initial:p.initial, household:hhName[p.hh],
+        netStr:fmt(pb.net), netColor: pb.net>0.01?credit:(pb.net<-0.01?owe:ter),
+        netLabel: pb.net>0.01?'Is owed by the house':(pb.net<-0.01?'Owes the house':'All settled'),
+        paidStr:fmt(pb.paid), owesStr:fmt(pb.owes),
+        rentWeeklyStr: rentWeekly>0 ? fmt(rentWeekly)+'/wk' : 'Receives rent',
+        rentOutStr: fmt(rentOut),
+        lines, fronted, frontedEmpty: fronted.length===0,
+        onBack:()=>this.setState({view:'people', selectedPerson:null}),
+      };
+    }
+
+    const modal = S.modal;
+
+    return {
+      accent, houseName,
+      todayStr: new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'}),
+      tabs,
+      isDashboard:view==='dashboard', isRent:view==='rent', isBills:view==='bills',
+      isShared:view==='shared', isPeople:view==='people', isHistory:view==='history', isPerson:view==='person',
+      heroAmt, heroLabel,
+      dashHouseholds, settleList, settleEmpty: settleList.length===0,
+      rentWeek, activity,
+      rentRows, rentOutStr: fmt(rentOutstanding),
+      billCards, sharedCards, peopleCards,
+      history, historyEmpty: history.length===0,
+      person,
+      onAddBill:()=>this.openModal('bill'), onAddShared:()=>this.openModal('common'),
+      modalOpen: !!modal,
+      isBillModal: !!modal && modal.type==='bill',
+      isCommonModal: !!modal && modal.type==='common',
+      isPresenceModal: !!modal && modal.type==='presence',
+      modalTitle: modal ? (modal.type==='bill'?'Add a bill':modal.type==='common'?'Add a shared expense':('Edit '+nm(modal.personId)+'\u2019s dates')) : '',
+      modalDraft: modal ? modal.draft : {},
+      modalPeople: S.people.map(p => ({id:p.id, name:p.name})),
+      mClose:()=>this.closeModal(), mSave:()=>this.saveModal(), stop:(e)=>e.stopPropagation(),
+      mType:e=>this.updateDraft('type', e.target.value),
+      mAmount:e=>this.updateDraft('amount', e.target.value),
+      mPaidBy:e=>this.updateDraft('paidBy', e.target.value),
+      mStart:e=>this.updateDraft('pStart', e.target.value),
+      mEnd:e=>this.updateDraft('pEnd', e.target.value),
+      mMethod:e=>this.updateDraft('splitMethod', e.target.value),
+      mLabel:e=>this.updateDraft('label', e.target.value),
+      mMovedIn:e=>this.updateDraft('movedIn', e.target.value),
+      mMovedOut:e=>this.updateDraft('movedOut', e.target.value),
+      mAwayStart:e=>this.updateDraft('awayStart', e.target.value),
+      mAwayEnd:e=>this.updateDraft('awayEnd', e.target.value),
+    };
+  }
+}
+</script>
+</body>
+</html>
