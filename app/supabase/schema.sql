@@ -199,7 +199,7 @@ begin
   end if;
 
   insert into weeks_home(period_id, member_id, weeks)
-  select p.id, v_member.id, round(extract(day from (p.end_date - p.start_date))::numeric / 7.0, 2)
+  select p.id, v_member.id, round((p.end_date - p.start_date)::numeric / 7.0, 2)
   from billing_periods p
   where p.household_id = v_household_id and p.is_current = true
   on conflict (period_id, member_id) do nothing;
