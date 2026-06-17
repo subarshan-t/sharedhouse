@@ -33,6 +33,18 @@ export type WeeksHome = {
   period_id: string;
   member_id: string;
   weeks: number;
+  is_manual: boolean;
+};
+
+export type AwayPeriod = {
+  id: string;
+  household_id: string;
+  member_id: string;
+  start_date: string;
+  end_date: string;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
 };
 
 export type Category = 'rent' | 'electricity' | 'gas' | 'water' | 'internet' | 'common';

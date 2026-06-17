@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 import type {
-  BillingPeriod, Category, Expense, Household, LedgerEntry, Member, SplitMode, WeeksHome,
+  AwayPeriod, BillingPeriod, Category, Expense, Household, LedgerEntry, Member, SplitMode, WeeksHome,
 } from '../lib/types';
 
 export type Party = {
@@ -31,6 +31,7 @@ export type HouseDataState = {
   currentMember: Member | null;
   currentPeriod: BillingPeriod | null;
   weeksHome: WeeksHome[];
+  awayPeriods: AwayPeriod[];
   periodExpenses: Expense[];
   commonExpenses: Expense[];
   ledgerEntries: LedgerEntry[];
@@ -38,12 +39,17 @@ export type HouseDataState = {
   myParty: Party | null;
   totalWeeks: number;
   weeksFor: (memberId: string) => number;
+  isManualWeeks: (memberId: string) => boolean;
   balanceFor: (memberId: string) => number;
   memberById: (memberId: string | null) => Member | undefined;
+  awayPeriodsFor: (memberId: string) => AwayPeriod[];
   refresh: () => Promise<void>;
   addExpense: (input: AddExpenseInput) => Promise<void>;
   settleParty: (party: Party, amount: number) => Promise<void>;
   updateWeeks: (memberId: string, weeks: number) => Promise<void>;
+  resetWeeksToAuto: (memberId: string) => Promise<void>;
+  addAwayPeriod: (memberId: string, startDate: string, endDate: string, note?: string) => Promise<void>;
+  deleteAwayPeriod: (id: string) => Promise<void>;
 };
 
 export const HouseDataContext = createContext<HouseDataState | null>(null);
