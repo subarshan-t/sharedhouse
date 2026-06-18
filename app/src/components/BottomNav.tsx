@@ -14,7 +14,7 @@ export function BottomNav({ active, onNavigate }: { active: NavKey; onNavigate: 
   return (
     <div style={{
       flex: 'none', background: t.nav, borderTop: `1px solid ${t.border}`,
-      padding: '9px 16px 16px', display: 'flex', alignItems: 'flex-start',
+      padding: '9px 16px calc(16px + env(safe-area-inset-bottom, 0px))', display: 'flex', alignItems: 'flex-start',
     }}
     >
       {TABS.map((tab) => {

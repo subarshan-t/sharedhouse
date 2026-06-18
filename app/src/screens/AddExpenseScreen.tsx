@@ -9,7 +9,7 @@ const CAT_KEYS: Category[] = ['rent', 'electricity', 'gas', 'water', 'internet',
 
 export function AddExpenseScreen({ onBack, onSaved }: { onBack: () => void; onSaved: () => void }) {
   const { t, dark } = useTheme();
-  const { members, currentMember, totalWeeks, addExpense } = useHouseData();
+  const { members, currentMember, totalWeeks, awayPeriods, addExpense } = useHouseData();
 
   const [amountStr, setAmountStr] = useState('');
   const [name, setName] = useState('');
@@ -17,10 +17,19 @@ export function AddExpenseScreen({ onBack, onSaved }: { onBack: () => void; onSa
   const [paidBy, setPaidBy] = useState(currentMember?.id ?? '');
   const [splitMode, setSplitMode] = useState<SplitMode>('equal');
   const [customShares, setCustomShares] = useState<Record<string, string>>({});
+  const [excludeAway, setExcludeAway] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const amount = parseFloat(amountStr) || 0;
+
+  const awayMembers = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    const awayIds = new Set(
+      awayPeriods.filter((a) => a.start_date <= today && today < a.end_date).map((a) => a.member_id),
+    );
+    return members.filter((m) => awayIds.has(m.id));
+  }, [awayPeriods, members]);
 
   const splitDefs = useMemo(() => {
     const defs: { k: SplitMode; label: string }[] = [{ k: 'equal', label: `Equally · ${members.length}` }];
@@ -29,12 +38,29 @@ export function AddExpenseScreen({ onBack, onSaved }: { onBack: () => void; onSa
     return defs;
   }, [category, members.length]);
 
+  const applyAwayExclusion = splitMode === 'equal' && excludeAway && awayMembers.length > 0;
+  const presentCount = members.length - (applyAwayExclusion ? awayMembers.length : 0);
+
   let splitTitle = 'Split equally';
-  let splitMeta = `${money(equalShare(amount, members.length))} each · ${members.length} housemates`;
+  let splitMeta = applyAwayExclusion
+    ? `${money(equalShare(amount, presentCount))} each · ${presentCount} of ${members.length} housemates (away excluded)`
+    : `${money(equalShare(amount, members.length))} each · ${members.length} housemates`;
   if (splitMode === 'weeks') { splitTitle = 'By weeks home'; splitMeta = `Prorated over ${totalWeeks} person-weeks`; }
   if (splitMode === 'custom') { splitTitle = 'Custom amounts'; splitMeta = 'Set each person manually'; }
 
   const customTotal = Object.values(customShares).reduce((a, v) => a + (parseFloat(v) || 0), 0);
+
+  function awayExcludedShares(): Record<string, number> {
+    const awayIds = new Set(awayMembers.map((m) => m.id));
+    const eligible = members.filter((m) => !m.is_primary_tenant && !awayIds.has(m.id));
+    const per = Math.round((amount / presentCount) * 100) / 100;
+    const shares: Record<string, number> = {};
+    members.forEach((m) => { shares[m.id] = 0; });
+    eligible.forEach((m) => { shares[m.id] = per; });
+    const diff = Math.round((amount - per * eligible.length) * 100) / 100;
+    if (eligible.length) shares[eligible[eligible.length - 1].id] += diff;
+    return shares;
+  }
 
   async function save() {
     setError('');
@@ -51,11 +77,13 @@ export function AddExpenseScreen({ onBack, onSaved }: { onBack: () => void; onSa
         name: name.trim(),
         category,
         amount,
-        splitMode,
         paidBy,
-        customShares: splitMode === 'custom'
-          ? Object.fromEntries(Object.entries(customShares).map(([k, v]) => [k, parseFloat(v) || 0]))
-          : undefined,
+        splitMode: applyAwayExclusion ? 'custom' : splitMode,
+        customShares: applyAwayExclusion
+          ? awayExcludedShares()
+          : splitMode === 'custom'
+            ? Object.fromEntries(Object.entries(customShares).map(([k, v]) => [k, parseFloat(v) || 0]))
+            : undefined,
       });
       onSaved();
     } catch (e) {
@@ -153,6 +181,36 @@ export function AddExpenseScreen({ onBack, onSaved }: { onBack: () => void; onSa
             );
           })}
         </div>
+        {splitMode === 'equal' && awayMembers.length > 0 && (
+          <div style={{ marginTop: 13, background: 'rgba(229,113,90,0.1)', border: '1px solid rgba(229,113,90,0.3)', borderRadius: 16, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E5715A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+              <span style={{ fontSize: 13, fontWeight: 800, color: t.text }}>
+                {awayMembers.map((m) => m.display_name).join(', ')} {awayMembers.length > 1 ? 'are' : 'is'} away right now
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 7 }}>
+              <button
+                onClick={() => setExcludeAway(true)}
+                style={{
+                  flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 800,
+                  background: excludeAway ? '#E5715A' : t.surface2, color: excludeAway ? '#fff' : t.text2,
+                }}
+              >
+                Exclude them
+              </button>
+              <button
+                onClick={() => setExcludeAway(false)}
+                style={{
+                  flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 800,
+                  background: !excludeAway ? t.ink : t.surface2, color: !excludeAway ? '#fff' : t.text2,
+                }}
+              >
+                Split with everyone
+              </button>
+            </div>
+          </div>
+        )}
         {splitMode === 'custom' ? (
           <div style={{ marginTop: 13, background: t.surface, borderRadius: 16, padding: '10px 16px' }}>
             {members.map((p) => (
