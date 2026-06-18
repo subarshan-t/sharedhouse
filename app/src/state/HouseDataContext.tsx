@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import type {
-  BillingPeriod, Expense, Household, LedgerEntry, Member, WeeksHome,
+  AwayPeriod, BillingPeriod, Expense, Household, LedgerEntry, Member, WeeksHome,
 } from '../lib/types';
 import { HouseDataContext, type AddExpenseInput, type Party } from './houseDataContextObj';
 
@@ -15,6 +15,7 @@ export function HouseDataProvider({ children }: { children: ReactNode }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [currentPeriod, setCurrentPeriod] = useState<BillingPeriod | null>(null);
   const [weeksHome, setWeeksHome] = useState<WeeksHome[]>([]);
+  const [awayPeriods, setAwayPeriods] = useState<AwayPeriod[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [ledgerEntries, setLedgerEntries] = useState<LedgerEntry[]>([]);
 
@@ -24,7 +25,8 @@ export function HouseDataProvider({ children }: { children: ReactNode }) {
     const h = households?.[0] ?? null;
     setHousehold(h);
     if (!h) {
-      setMembers([]); setCurrentPeriod(null); setWeeksHome([]); setExpenses([]); setLedgerEntries([]);
+      setMembers([]); setCurrentPeriod(null); setWeeksHome([]); setAwayPeriods([]);
+      setExpenses([]); setLedgerEntries([]);
       setLoading(false);
       return;
     }
@@ -38,14 +40,16 @@ export function HouseDataProvider({ children }: { children: ReactNode }) {
     setMembers(m);
     setCurrentPeriod(period);
 
-    const [weeksRes, expensesRes, ledgerRes] = await Promise.all([
+    const [weeksRes, awayRes, expensesRes, ledgerRes] = await Promise.all([
       period
         ? supabase.from('weeks_home').select('*').eq('period_id', period.id)
         : Promise.resolve({ data: [] as WeeksHome[] }),
+      supabase.from('away_periods').select('*').eq('household_id', h.id).order('start_date', { ascending: false }),
       supabase.from('expenses').select('*').eq('household_id', h.id).order('created_at', { ascending: false }),
       supabase.from('ledger_entries').select('*').eq('household_id', h.id),
     ]);
     setWeeksHome(weeksRes.data ?? []);
+    setAwayPeriods(awayRes.data ?? []);
     setExpenses(expensesRes.data ?? []);
     setLedgerEntries(ledgerRes.data ?? []);
     setLoading(false);
@@ -65,6 +69,14 @@ export function HouseDataProvider({ children }: { children: ReactNode }) {
 
   function weeksFor(memberId: string): number {
     return weeksHome.find((w) => w.member_id === memberId)?.weeks ?? 0;
+  }
+
+  function isManualWeeks(memberId: string): boolean {
+    return weeksHome.find((w) => w.member_id === memberId)?.is_manual ?? false;
+  }
+
+  function awayPeriodsFor(memberId: string): AwayPeriod[] {
+    return awayPeriods.filter((a) => a.member_id === memberId);
   }
 
   function balanceFor(memberId: string): number {
@@ -202,7 +214,44 @@ export function HouseDataProvider({ children }: { children: ReactNode }) {
     if (!currentPeriod) return;
     const { error } = await supabase
       .from('weeks_home')
-      .upsert({ period_id: currentPeriod.id, member_id: memberId, weeks }, { onConflict: 'period_id,member_id' });
+      .upsert(
+        { period_id: currentPeriod.id, member_id: memberId, weeks, is_manual: true },
+        { onConflict: 'period_id,member_id' },
+      );
+    if (error) throw error;
+    await refresh();
+  }
+
+  async function resetWeeksToAuto(memberId: string) {
+    if (!currentPeriod) return;
+    const { error } = await supabase
+      .from('weeks_home')
+      .upsert(
+        { period_id: currentPeriod.id, member_id: memberId, weeks: 0, is_manual: false },
+        { onConflict: 'period_id,member_id' },
+      );
+    if (error) throw error;
+    const { error: rpcError } = await supabase.rpc('recompute_weeks_home', { p_period_id: currentPeriod.id });
+    if (rpcError) throw rpcError;
+    await refresh();
+  }
+
+  async function addAwayPeriod(memberId: string, startDate: string, endDate: string, note?: string) {
+    if (!household || !currentMember) return;
+    const { error } = await supabase.from('away_periods').insert({
+      household_id: household.id,
+      member_id: memberId,
+      start_date: startDate,
+      end_date: endDate,
+      note: note || null,
+      created_by: currentMember.id,
+    });
+    if (error) throw error;
+    await refresh();
+  }
+
+  async function deleteAwayPeriod(id: string) {
+    const { error } = await supabase.from('away_periods').delete().eq('id', id);
     if (error) throw error;
     await refresh();
   }
@@ -210,9 +259,10 @@ export function HouseDataProvider({ children }: { children: ReactNode }) {
   return (
     <HouseDataContext.Provider
       value={{
-        loading, household, members, currentMember, currentPeriod, weeksHome,
+        loading, household, members, currentMember, currentPeriod, weeksHome, awayPeriods,
         periodExpenses, commonExpenses, ledgerEntries, parties, myParty, totalWeeks,
-        weeksFor, balanceFor, memberById, refresh, addExpense, settleParty, updateWeeks,
+        weeksFor, isManualWeeks, balanceFor, memberById, awayPeriodsFor, refresh, addExpense,
+        settleParty, updateWeeks, resetWeeksToAuto, addAwayPeriod, deleteAwayPeriod,
       }}
     >
       {children}

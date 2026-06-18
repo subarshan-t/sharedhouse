@@ -17,8 +17,9 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { SettleScreen } from './screens/SettleScreen';
 import { AddExpenseScreen } from './screens/AddExpenseScreen';
 import { WeeksEditorScreen } from './screens/WeeksEditorScreen';
+import { AwayPeriodsScreen } from './screens/AwayPeriodsScreen';
 
-type Screen = NavKey | 'billDetail' | 'party' | 'settle' | 'add' | 'weeks';
+type Screen = NavKey | 'billDetail' | 'party' | 'settle' | 'add' | 'weeks' | 'away';
 
 function LoadingShell() {
   return (
@@ -50,7 +51,8 @@ function MainApp() {
   if (loading || !household) return <LoadingShell />;
 
   const accent = household.accent_color || '#14B8A6';
-  const navKey: NavKey = screen === 'billDetail' ? 'bills' : screen === 'party' ? 'people' : screen === 'weeks' ? 'profile' : (screen as NavKey);
+  const navKey: NavKey = screen === 'billDetail' ? 'bills' : screen === 'party' ? 'people'
+    : screen === 'weeks' || screen === 'away' ? 'profile' : (screen as NavKey);
   const showNav = (['home', 'bills', 'people', 'profile'] as Screen[]).includes(screen);
 
   function openSettle(party: Party, returnTo: Screen) {
@@ -103,7 +105,10 @@ function MainApp() {
       content = <ProfileScreen onOpenWeeks={() => setScreen('weeks')} />;
       break;
     case 'weeks':
-      content = <WeeksEditorScreen onBack={() => setScreen('profile')} />;
+      content = <WeeksEditorScreen onBack={() => setScreen('profile')} onOpenAway={() => setScreen('away')} />;
+      break;
+    case 'away':
+      content = <AwayPeriodsScreen onBack={() => setScreen('weeks')} />;
       break;
     case 'settle':
       content = settleTarget && (
