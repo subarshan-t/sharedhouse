@@ -20,7 +20,7 @@ jobs:
 
       - name: Deploy to Vercel
         run: |
-          npx --yes vercel deploy --prod --yes \
+          npx --yes vercel@54.14.0 deploy --prod --yes \
             --token="$VERCEL_TOKEN" \
             --build-env VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
             --build-env VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY"
